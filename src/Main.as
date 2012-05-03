@@ -46,6 +46,10 @@
 		private var tempoTween:Number;
 		private var tweenBomba:Tween;
 		
+		private var timeFactory:Number = 1;
+		private var timeElasped:Number;
+		private var tBombaElasped:Number;
+		
 		public function Main() 
 		{
 			if (stage) init();
@@ -81,6 +85,8 @@
 			
 			tAviao = new Cronometer();
 			tAviao.start();
+			timeElasped = 0;
+			tBombaElasped = 0;
 			
 			bomba = new Bomba();
 			bomba.x = -50;
@@ -136,6 +142,7 @@
 				tempoTween = Math.sqrt(2 * Number(altura.text.replace(" m","").replace(",",".")) / 9.8);
 				
 				tAviao.reset();
+				timeElasped = 0;
 				
 				if (tBomba.isRunning())
 				{
@@ -143,10 +150,12 @@
 					tBomba.reset();
 					calculaPontuacao(0);
 					bomba.y = -100;
-					
 				}
 				bombaLancada = false;
 				bombaExplodiu = false;
+				
+				launchButton.alpha = 1;
+				launchButton.mouseEnabled = true;
 				
 			}
 			else
@@ -159,6 +168,7 @@
 					//calculaPontuacao(0);
 				//}
 				tAviao.reset();
+				timeElasped = 0;
 			}
 			
 			
@@ -168,6 +178,18 @@
 		{
 			stage.addEventListener(Event.ENTER_FRAME, update);
 			launchButton.addEventListener(MouseEvent.CLICK, launchBomb);
+			launchButton.addEventListener(MouseEvent.MOUSE_OVER, eagleTimeOn);
+			launchButton.addEventListener(MouseEvent.MOUSE_OUT, eagleTimeOff);
+		}
+		
+		private function eagleTimeOn(e:MouseEvent):void 
+		{
+			timeFactory = 0.2;
+		}
+		
+		private function eagleTimeOff(e:MouseEvent):void 
+		{
+			timeFactory = 1;
 		}
 		
 		private function launchBomb(e:MouseEvent):void 
@@ -177,12 +199,23 @@
 				bombaR0 = pixel2meter(new Point(aviao.x, aviao.y));
 				bombaV0 = aviaoV0;
 				bomba.rotation = -90;
+				tBombaElasped = 0;
 				bomba.gotoAndStop("INICIO");
 				
 				tBomba.start();
 				bombaLancada = true;
-				tweenBomba = new Tween(bomba, "rotation", None.easeNone, -90, 0, tempoTween, true);
+				//tweenBomba = new Tween(bomba, "rotation", None.easeNone, -90, 0, tempoTween, true);
+				
+				launchButton.alpha = 0.5;
+				launchButton.mouseEnabled = false;
 			}
+		}
+		
+		private function getBombRotation(time:Number):Number
+		{
+			var rot:Number = (time / tempoTween * (90)) - 90;
+			
+			return rot;
 		}
 		
 		/*
@@ -191,12 +224,16 @@
 		private function update (event:Event) : void
 		{
 			var position:Point;
-			var t:Number;
+			//var t:Number;
+			
+			timeElasped += (tAviao.read() / 1000) * timeFactory;
+			tAviao.reset();
 			
 			// Atualiza a posição do avião
-			t = tAviao.read() / 1000;
+			//t = tAviao.read() / 1000;
 			
-			position = meter2pixel(r(aviaoR0, aviaoV0, gravidade, t));
+			//position = meter2pixel(r(aviaoR0, aviaoV0, gravidade, t));
+			position = meter2pixel(r(aviaoR0, aviaoV0, gravidade, timeElasped));
 			aviao.x = position.x;
 			
 			if (aviao.x > VIEWPORT.width + aviao.width / 2) 
@@ -206,7 +243,8 @@
 			}
 			
 			//Atauliza ETO
-			var tempoETO:Number = timeToTarget - t + 0.22;
+			//var tempoETO:Number = timeToTarget - t + 0.22;
+			var tempoETO:Number = timeToTarget - timeElasped + 0.22;
 			if (tempoETO <= 0) ETO.text = "0 s";
 			else ETO.text = tempoETO.toFixed(1).replace(".",",") + " s";
 			
@@ -215,9 +253,12 @@
 			// Atualiza a posição da bomba
 			if (bombaLancada && !bombaExplodiu)
 			{
-				t = tBomba.read() / 1000;
+				tBombaElasped += (tBomba.read() / 1000) * timeFactory;
+				tBomba.reset();
+				//t = tBomba.read() / 1000;
 				
-				position = meter2pixel(r(bombaR0, bombaV0, gravidade, t));
+				//position = meter2pixel(r(bombaR0, bombaV0, gravidade, t));
+				position = meter2pixel(r(bombaR0, bombaV0, gravidade, tBombaElasped));
 				
 				if (position.y >= alvo.y)
 				{
@@ -241,14 +282,15 @@
 				{
 					bomba.x = position.x;
 					bomba.y = position.y;
+					//bomba.rotation = getBombRotation(tBomba.read() / 1000);
+					bomba.rotation = getBombRotation(tBombaElasped);
 				}
 			}
-			
 		}
 		
 		private function calculaPontuacao(posicaoX:Number):Number
 		{
-			var pontuacaoAux =100 - (100 / DELTA_MENOR_100) * (Math.abs(posicaoX - alvo.x) - DELTA_100);
+			var pontuacaoAux = 100 - (100 / DELTA_MENOR_100) * (Math.abs(posicaoX - alvo.x) - DELTA_100);
 			
 			if (pontuacaoAux > 100) pontuacaoAux = 100;
 			else if (pontuacaoAux < 0) pontuacaoAux = 0;
