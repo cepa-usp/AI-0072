@@ -26,7 +26,7 @@ package BaseAssets
 			this.y = stage.stageHeight / 2;
 			
 			//this.closeButton.addEventListener(MouseEvent.CLICK, closeScreen);
-			//stage.addEventListener(KeyboardEvent.KEY_UP, escCloseScreen);
+			stage.addEventListener(KeyboardEvent.KEY_UP, escCloseScreen);
 			
 			this.gotoAndStop("END");
 		}

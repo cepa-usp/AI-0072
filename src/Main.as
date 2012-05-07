@@ -21,7 +21,7 @@
 		private const SCENE:Rectangle = new Rectangle(0, 600, 2000, 600);
 		private const gravidade:Point = new Point(0, -9.8);
 		
-		private const DELTA_100:Number = 13;
+		private const DELTA_100:Number = 5;
 		private const DELTA_MENOR_100:Number = 30;
 		
 		private var aviaoR0:Point;
@@ -41,7 +41,8 @@
 		private var timeToTarget:Number;
 		private var pontuacao:Number;
 		
-		private var score:DynamicAverage;
+		private var score:DynamicAverage2;
+		private var scoreValendo:DynamicAverage2;
 		private var bombaExplodiu:Boolean;
 		private var tempoTween:Number;
 		private var tweenBomba:Tween;
@@ -49,6 +50,10 @@
 		private var timeFactory:Number = 1;
 		private var timeElasped:Number;
 		private var tBombaElasped:Number;
+		
+		private var scoreMin:Number = 50;
+		private var valendoNota:Boolean = false;
+		
 		
 		public function Main() 
 		{
@@ -64,6 +69,8 @@
 			
 			initVariables();
 			addListeners();
+			
+			iniciaTutorial();
 		}
 		
 		private function initVariables():void
@@ -108,8 +115,10 @@
 			
 			tempoTween = Math.sqrt(2 * Number(altura.text.replace(" m", "").replace(",", ".")) / 9.8);
 			
-			score = new DynamicAverage();
+			score = new DynamicAverage2();
 			mediaPontos.text = "Média: 0%";
+			
+			scoreValendo = new DynamicAverage2();
 			
 			setChildIndex(botoes, numChildren - 1);
 			setChildIndex(bordaAtividade, numChildren - 1);
@@ -128,6 +137,9 @@
 				aviao.y = posInicialAviao.y;
 				indETO.y = posInicialAviao.y;
 				ETO.y = indETO.y + 25;
+				
+				indETO.visible = true;
+				ETO.visible = true;
 				
 				var hAviao:Number = pixel2meter(new Point(posInicialAviao.x, posInicialAviao.y)).y;
 				//altura.text = hAviao.toFixed(1).replace(".",",") + " m";
@@ -169,6 +181,8 @@
 				//}
 				tAviao.reset();
 				timeElasped = 0;
+				indETO.visible = true;
+				ETO.visible = true;
 			}
 			
 			
@@ -180,6 +194,32 @@
 			launchButton.addEventListener(MouseEvent.CLICK, launchBomb);
 			launchButton.addEventListener(MouseEvent.MOUSE_OVER, eagleTimeOn);
 			launchButton.addEventListener(MouseEvent.MOUSE_OUT, eagleTimeOff);
+			
+			btEstatisticas.addEventListener(MouseEvent.CLICK, showEstatisticas);
+			btValendoNota.addEventListener(MouseEvent.CLICK, fazValer);
+		}
+		
+		private function fazValer(e:MouseEvent):void 
+		{
+			valendoNota = true;
+			btValendoNota.visible = false;
+		}
+		
+		private function showEstatisticas(e:MouseEvent):void 
+		{
+			var textoEstatisticas:String = "";
+			
+			textoEstatisticas += "Número total de tentativas: " + String(score.n) + "\n";
+			textoEstatisticas += "Tentativas valendo nota: " + String(scoreValendo.n) + "\n";
+			textoEstatisticas += "Tentativas não valendo nota: " + String(score.n - scoreValendo.n) + "\n";
+			textoEstatisticas += "Pontuação para passar: " + String(scoreMin) + "%\n";
+			textoEstatisticas += "Pontuação média total: " + String(score.mean.toFixed(2)) + "%\n";
+			textoEstatisticas += "Pontuação média valendo nota: " + String(scoreValendo.mean.toFixed(2)) + "%\n";
+			textoEstatisticas += "Estado da AI: " + (valendoNota ? "Valendo nota" : "Praticando");
+			
+			feedbackScreen.setText(textoEstatisticas);
+			
+			setChildIndex(feedbackScreen, numChildren - 1);
 		}
 		
 		private function eagleTimeOn(e:MouseEvent):void 
@@ -245,7 +285,13 @@
 			//Atauliza ETO
 			//var tempoETO:Number = timeToTarget - t + 0.22;
 			var tempoETO:Number = timeToTarget - timeElasped + 0.22;
-			if (tempoETO <= 0) ETO.text = "0 s";
+			if (tempoETO <= 0) {
+				ETO.text = "0 s";
+				if (ETO.visible) {
+					indETO.visible = false;
+					ETO.visible = false;
+				}
+			}
 			else ETO.text = tempoETO.toFixed(1).replace(".",",") + " s";
 			
 			//if (Math.abs(tempoETO - Number(tempoCerto.text.replace(",","."))) < 0.02 ) launchBomb(null);
@@ -296,6 +342,9 @@
 			else if (pontuacaoAux < 0) pontuacaoAux = 0;
 			
 			score.push(pontuacaoAux);
+			if (valendoNota) {
+				scoreValendo.push(pontuacaoAux);
+			}
 			
 			pontuacao = Math.round(score.mean);
 			
@@ -345,6 +394,77 @@
 				to.left + to.width / from.width * (r.x - from.left),
 				to.top - to.height / from.height * (r.y - from.top)
 			);
+		}
+		
+		
+		
+		//---------------- Tutorial -----------------------
+		
+		private var balao:CaixaTexto;
+		private var pointsTuto:Array;
+		private var tutoBaloonPos:Array;
+		private var tutoPos:int;
+		private var alturaForTuto:Point = new Point();
+		private var etoForTuto:Point = new Point();
+		private var tutoSequence:Array = ["O avião precisa lançar uma bomba...", 
+										  "... e atingir o alvo.",
+										  "Para isso, você deve usar a altura do voo para calcular o tempo de queda da bomba...",
+										  "... e compará-lo com o tempo que falta para o avião sobrevoar o alvo (ETO).",
+										  "Sua pontuação é a média de todos os seus lançamentos (após um lançamento, o avião sobrevoa o alvo novamente numa altura diferente).",
+										  "Inicialmente seus lançamentos não valem nota. Quando você achar que já está pronto(a) para ser avaliado(a), pressione este botão."];
+		
+		override public function iniciaTutorial(e:MouseEvent = null):void 
+		{
+			tutoPos = 0;
+			
+			alturaForTuto.x = altura.x + altura.textWidth + 5;
+			alturaForTuto.y = altura.y + altura.height / 2;
+			
+			etoForTuto.x = indETO.x - 25;
+			etoForTuto.y = indETO.y + 20;
+			
+			if(balao == null){
+				balao = new CaixaTexto(true);
+				addChild(balao);
+				balao.visible = false;
+				
+				pointsTuto = 	[new Point(launchButton.x, launchButton.y - launchButton.height / 2),
+								new Point(alvo.x , alvo.y),
+								alturaForTuto,
+								etoForTuto,
+								new Point(mediaPontos.x + 20 , mediaPontos.y),
+								new Point(btValendoNota.x, btValendoNota.y - btValendoNota.height / 2)];
+								
+				tutoBaloonPos = [[CaixaTexto.BOTTON, CaixaTexto.CENTER],
+								[CaixaTexto.BOTTON, CaixaTexto.LAST],
+								[CaixaTexto.LEFT, CaixaTexto.CENTER],
+								[CaixaTexto.RIGHT, CaixaTexto.FIRST],
+								[CaixaTexto.BOTTON, CaixaTexto.FIRST],
+								[CaixaTexto.BOTTON, CaixaTexto.FIRST]];
+			}
+			balao.removeEventListener(Event.CLOSE, closeBalao);
+			
+			balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+			balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+			balao.addEventListener(Event.CLOSE, closeBalao);
+			balao.visible = true;
+		}
+		
+		private function closeBalao(e:Event):void 
+		{
+			tutoPos++;
+			if (tutoPos >= tutoSequence.length) {
+				balao.removeEventListener(Event.CLOSE, closeBalao);
+				balao.visible = false;
+			}else {
+				alturaForTuto.x = altura.x + altura.textWidth + 5;
+				alturaForTuto.y = altura.y + altura.height / 2;
+				etoForTuto.x = indETO.x - 45;
+				etoForTuto.y = indETO.y + 14;
+				
+				balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+				balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+			}
 		}
 		
 	}

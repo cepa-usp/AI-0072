@@ -19,7 +19,7 @@ package BaseAssets
 		 */
 		private var creditosScreen:AboutScreen;
 		private var orientacoesScreen:InstScreen;
-		private var feedbackScreen:FeedBackScreen;
+		protected var feedbackScreen:FeedBackScreen;
 		
 		public var botoes:Botoes;
 		public var bordaAtividade:Borda;
