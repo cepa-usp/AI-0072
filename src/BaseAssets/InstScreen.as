@@ -25,31 +25,32 @@ package BaseAssets
 			this.x = stage.stageWidth / 2;
 			this.y = stage.stageHeight / 2;
 			
-			//this.gotoAndStop("END");
-			this.visible = false;
+			this.gotoAndStop("END");
+			//this.visible = false;
 			
-			//this.addEventListener(MouseEvent.CLICK, closeScreen);
-			closeButton.addEventListener(MouseEvent.CLICK, closeScreen);
+			this.addEventListener(MouseEvent.CLICK, closeScreen);
+			//closeButton.addEventListener(MouseEvent.CLICK, closeScreen);
 			stage.addEventListener(KeyboardEvent.KEY_UP, escCloseScreen);
 		}
 		
 		private function escCloseScreen(e:KeyboardEvent):void 
 		{
 			if (e.keyCode ==  Keyboard.ESCAPE) {
-				if (this.currentFrame == 1) this.visible = false;//this.play();
+				//if (this.currentFrame == 1) this.visible = false;
+				if (this.currentFrame == 1) closeScreen(null);
 			}
 		}
 		
 		private function closeScreen(e:MouseEvent):void 
 		{
-			//this.play();
-			this.visible = false;
+			this.play();
+			//this.visible = false;
 		}
 		
 		public function openScreen():void
 		{
-			//this.gotoAndStop("BEGIN");
-			this.visible = true;
+			this.gotoAndStop("BEGIN");
+			//this.visible = true;
 		}
 		
 	}

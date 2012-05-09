@@ -207,6 +207,10 @@ package
 						this.x = x - marginText - texto.textWidth + widthArrow / 2;
 					}
 					break;
+				default:
+					this.x = x;
+					this.y = y;
+					break;
 			}
 		}
 		

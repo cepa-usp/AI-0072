@@ -10,6 +10,9 @@
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.media.Sound;
+	import flash.media.SoundChannel;
+	import flash.media.SoundTransform;
 	/**
 	 * ...
 	 * @author Alexandre
@@ -54,6 +57,13 @@
 		private var scoreMin:Number = 50;
 		private var valendoNota:Boolean = false;
 		
+		private var sound:SoundChannel = new SoundChannel();
+		private var soundAviao:SoundChannel = new SoundChannel();
+		private var bombaCaindo:BombaCaindo = new BombaCaindo();
+		private var explosao:Explosao = new Explosao();
+		private var aviaoVoando:AviaoVoando = new AviaoVoando();
+		
+		private var soundTransform2:SoundTransform = new SoundTransform(0.05);
 		
 		public function Main() 
 		{
@@ -77,6 +87,7 @@
 		{
 			aviao = new Aviao();
 			addChild(aviao);
+			soundAviao = aviaoVoando.play();
 			
 			//aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , Math.random() * 270 + 300);
 			aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , pixel2meter(new Point(0, Math.random() * 265 + 35)).y);
@@ -87,8 +98,8 @@
 			var posInicialAviao:Point = meter2pixel(aviaoR0);
 			aviao.x = posInicialAviao.x;
 			aviao.y = posInicialAviao.y;
-			indETO.y = posInicialAviao.y;
-			ETO.y = indETO.y + 25;
+			//indETO.y = posInicialAviao.y;
+			//ETO.y = indETO.y + 25;
 			
 			tAviao = new Cronometer();
 			tAviao.start();
@@ -109,6 +120,10 @@
 			
 			flechaAltura.height = (VIEWPORT.height - aviao.y) - (VIEWPORT.height - flechaAltura.y);
 			altura.y = flechaAltura.y - flechaAltura.height / 2 - altura.height / 2;
+			downArrow.x = flechaAltura.x;
+			downArrow.y = flechaAltura.y;
+			upArrow.x = flechaAltura.x;
+			upArrow.y = flechaAltura.y - flechaAltura.height;
 			
 			distanciaAlvo = pixel2meter(new Point(alvo.x, alvo.y)).x + Math.abs(aviaoR0.x);
 			timeToTarget = distanciaAlvo / aviaoV0.x;
@@ -116,7 +131,7 @@
 			tempoTween = Math.sqrt(2 * Number(altura.text.replace(" m", "").replace(",", ".")) / 9.8);
 			
 			score = new DynamicAverage2();
-			mediaPontos.text = "Média: 0%";
+			//mediaPontos.text = "Média: 0%";
 			
 			scoreValendo = new DynamicAverage2();
 			
@@ -128,6 +143,9 @@
 		{
 			if (bombaLancada)
 			{
+				sound.stop();
+				//stage.removeEventListener(Event.ENTER_FRAME, soundSeek);
+				
 				//aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , Math.random() * 270 + 300);
 				aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , pixel2meter(new Point(0, Math.random() * 265 + 35)).y);
 				//aviaoV0 = new Point(150, 0);
@@ -135,8 +153,8 @@
 				
 				var posInicialAviao:Point = meter2pixel(aviaoR0);
 				aviao.y = posInicialAviao.y;
-				indETO.y = posInicialAviao.y;
-				ETO.y = indETO.y + 25;
+				//indETO.y = posInicialAviao.y;
+				//ETO.y = indETO.y + 25;
 				
 				indETO.visible = true;
 				ETO.visible = true;
@@ -147,6 +165,10 @@
 				
 				flechaAltura.height = (VIEWPORT.height - posInicialAviao.y) - (VIEWPORT.height - flechaAltura.y);
 				altura.y = flechaAltura.y - flechaAltura.height / 2 - altura.height / 2;
+				downArrow.x = flechaAltura.x;
+				downArrow.y = flechaAltura.y;
+				upArrow.x = flechaAltura.x;
+				upArrow.y = flechaAltura.y - flechaAltura.height;
 				
 				distanciaAlvo = pixel2meter(new Point(alvo.x, alvo.y)).x + Math.abs(aviaoR0.x);
 				timeToTarget = distanciaAlvo / aviaoV0.x;
@@ -169,6 +191,7 @@
 				launchButton.alpha = 1;
 				launchButton.mouseEnabled = true;
 				
+				updateStatisticas();
 			}
 			else
 			{
@@ -185,6 +208,8 @@
 				ETO.visible = true;
 			}
 			
+			soundAviao.stop();
+			soundAviao = aviaoVoando.play();
 			
 		}
 		
@@ -196,10 +221,19 @@
 			launchButton.addEventListener(MouseEvent.MOUSE_OUT, eagleTimeOff);
 			
 			btEstatisticas.addEventListener(MouseEvent.CLICK, showEstatisticas);
-			btValendoNota.addEventListener(MouseEvent.CLICK, fazValer);
+			btValendoNota.addEventListener(MouseEvent.CLICK, askFazValer);
+			
+			feedbackScreen.addEventListener("OK", fazValer)
 		}
 		
-		private function fazValer(e:MouseEvent):void 
+		private function askFazValer(e:MouseEvent):void 
+		{
+			feedbackScreen.okCancelMode = true;
+			feedbackScreen.setText("Ao entrar no modo de avaliação e a partir do próximo lançamento, sua pontuação será contabilizada na sua nota. Além disso, não será possível retornar para o modo de investigação. Confirma a alteração para o modo de avaliação?");
+			setChildIndex(feedbackScreen, numChildren - 1);
+		}
+		
+		private function fazValer(e:Event):void 
 		{
 			valendoNota = true;
 			btValendoNota.visible = false;
@@ -209,17 +243,25 @@
 		{
 			var textoEstatisticas:String = "";
 			
-			textoEstatisticas += "Número total de tentativas: " + String(score.n) + "\n";
+			textoEstatisticas += "Número de lançamentos: " + String(score.n) + "\n";
 			textoEstatisticas += "Tentativas valendo nota: " + String(scoreValendo.n) + "\n";
 			textoEstatisticas += "Tentativas não valendo nota: " + String(score.n - scoreValendo.n) + "\n";
 			textoEstatisticas += "Pontuação para passar: " + String(scoreMin) + "%\n";
-			textoEstatisticas += "Pontuação média total: " + String(score.mean.toFixed(2)) + "%\n";
-			textoEstatisticas += "Pontuação média valendo nota: " + String(scoreValendo.mean.toFixed(2)) + "%\n";
+			textoEstatisticas += "Pontuação média total: " + String(score.mean.toFixed(0)).replace(".", "") + "%\n";
+			textoEstatisticas += "Pontuação média valendo nota: " + String(scoreValendo.mean.toFixed(0)).replace(".", "") + "%\n";
 			textoEstatisticas += "Estado da AI: " + (valendoNota ? "Valendo nota" : "Praticando");
 			
+			feedbackScreen.okCancelMode = false;
 			feedbackScreen.setText(textoEstatisticas);
 			
 			setChildIndex(feedbackScreen, numChildren - 1);
+		}
+		
+		private function updateStatisticas():void
+		{
+			if (feedbackScreen.visible) {
+				showEstatisticas(null);
+			}
 		}
 		
 		private function eagleTimeOn(e:MouseEvent):void 
@@ -244,10 +286,23 @@
 				
 				tBomba.start();
 				bombaLancada = true;
+				
+				sound = bombaCaindo.play();
+				sound.soundTransform = soundTransform2;
+				//stage.addEventListener(Event.ENTER_FRAME, soundSeek);
+				
 				//tweenBomba = new Tween(bomba, "rotation", None.easeNone, -90, 0, tempoTween, true);
 				
 				launchButton.alpha = 0.5;
 				launchButton.mouseEnabled = false;
+			}
+		}
+		
+		private function soundSeek(e:Event):void 
+		{
+			if (sound.position >= 5000) {
+				sound.stop();
+				sound = Sound(bombaCaindo).play(4900);
 			}
 		}
 		
@@ -320,9 +375,17 @@
 					tBomba.stop();
 					tBomba.reset();
 					
+					//sound.stop();
+					sound.stop();
+					//stage.removeEventListener(Event.ENTER_FRAME, soundSeek);
+					explosao.play();
+					
 					//bomba.play();
+					bomba.rotation = 0;
 					bomba.gotoAndPlay(2);
 					bomba.pontuacao.text = String(Math.round(pontos)) + "%";
+					
+					updateStatisticas();
 				}
 				else
 				{
@@ -348,7 +411,7 @@
 			
 			pontuacao = Math.round(score.mean);
 			
-			mediaPontos.text = "Média: " + String(pontuacao) + "%";
+			//mediaPontos.text = "Média: " + String(pontuacao) + "%";
 			
 			return pontuacaoAux;
 			
@@ -432,14 +495,14 @@
 								new Point(alvo.x , alvo.y),
 								alturaForTuto,
 								etoForTuto,
-								new Point(mediaPontos.x + 20 , mediaPontos.y),
+								new Point(300 , 200),
 								new Point(btValendoNota.x, btValendoNota.y - btValendoNota.height / 2)];
 								
 				tutoBaloonPos = [[CaixaTexto.BOTTON, CaixaTexto.CENTER],
 								[CaixaTexto.BOTTON, CaixaTexto.LAST],
 								[CaixaTexto.LEFT, CaixaTexto.CENTER],
 								[CaixaTexto.RIGHT, CaixaTexto.FIRST],
-								[CaixaTexto.BOTTON, CaixaTexto.FIRST],
+								["", ""],
 								[CaixaTexto.BOTTON, CaixaTexto.FIRST]];
 			}
 			balao.removeEventListener(Event.CLOSE, closeBalao);

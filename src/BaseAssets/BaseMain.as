@@ -74,7 +74,9 @@ package BaseAssets
 			botoes.tutorialBtn.addEventListener(MouseEvent.CLICK, iniciaTutorial);
 			botoes.orientacoesBtn.addEventListener(MouseEvent.CLICK, openOrientacoes);
 			botoes.creditos.addEventListener(MouseEvent.CLICK, openCreditos);
-			botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
+			//botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
+			botoes.resetButton.alpha = 0.5;
+			botoes.resetButton.mouseEnabled = false;
 			
 			createToolTips();
 		}
