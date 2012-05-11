@@ -248,6 +248,7 @@
 		{
 			valendoNota = true;
 			btValendoNota.visible = false;
+			saveStatus();
 		}
 		
 		private function showEstatisticas(e:MouseEvent):void 
@@ -418,6 +419,15 @@
 			scoreTotal.push(pontuacaoAux);
 			if (valendoNota) {
 				scoreValendo.push(pontuacaoAux);
+				if(ExternalInterface.available){
+					if (!completed) {
+						if (scoreValendo.mean >= scoreMin) {
+							completed = true;
+							score = scoreValendo.mean;
+							saveStatus();
+						}
+					}
+				}
 			}
 			
 			pontuacao = Math.round(scoreTotal.mean);
