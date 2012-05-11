@@ -51,11 +51,38 @@ package BaseAssets
 			dispatchEvent(new Event("OK", true));
 		}
 		
-		private function openScreen():void
+		private var stats:Object = new Object();
+		public function updateStatics(stats:Object):void
+		{
+			this.stats.nTotal = stats.nTotal;
+			this.stats.nValendo = stats.nValendo;
+			this.stats.nNaoValendo = stats.nNaoValendo;
+			this.stats.scoreMin = stats.scoreMin;
+			this.stats.scoreTotal = stats.scoreTotal;
+			this.stats.scoreValendo = stats.scoreValendo;
+			this.stats.valendo = stats.valendo;
+			
+			if (this.currentFrame == 1) {
+				estatisticas.nTotal.text = stats.nTotal;
+				estatisticas.nValendo.text = stats.nValendo;
+				estatisticas.nNaoValendo.text = stats.nNaoValendo;
+				estatisticas.scoreMin.text = stats.scoreMin;
+				estatisticas.scoreTotal.text = stats.scoreTotal;
+				estatisticas.scoreValendo.text = stats.scoreValendo;
+				
+				if (stats.valendo) estatisticas.valendoMC.gotoAndStop("VALENDO");
+				else estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+			}
+		}
+		
+		public function openScreen():void
 		{
 			this.gotoAndStop("BEGIN");
 			
 			if (okCancelMode) {
+				estatisticas.visible = false;
+				this.texto.visible = true;
+				
 				closeButton.x = 0;
 				cancelButton.x = 195;
 				cancelButton.visible = true;
@@ -64,6 +91,19 @@ package BaseAssets
 				cancelButton.addEventListener(MouseEvent.CLICK, closeScreen, false, 0, true);
 				closeButton.addEventListener(MouseEvent.CLICK, closeScreenOK, false, 0, true);
 			}else {
+				this.texto.visible = false;
+				estatisticas.visible = true;
+				
+				estatisticas.nTotal.text = stats.nTotal;
+				estatisticas.nValendo.text = stats.nValendo;
+				estatisticas.nNaoValendo.text = stats.nNaoValendo;
+				estatisticas.scoreMin.text = stats.scoreMin;
+				estatisticas.scoreTotal.text = stats.scoreTotal;
+				estatisticas.scoreValendo.text = stats.scoreValendo;
+				
+				if (stats.valendo) estatisticas.valendoMC.gotoAndStop("VALENDO");
+				else estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+				
 				closeButton.x = 195;
 				cancelButton.visible = false;
 				closeButton.visible = true;

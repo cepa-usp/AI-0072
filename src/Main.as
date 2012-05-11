@@ -240,7 +240,8 @@
 		private function askFazValer(e:MouseEvent):void 
 		{
 			feedbackScreen.okCancelMode = true;
-			feedbackScreen.setText("Ao entrar no modo de avaliação e a partir do próximo lançamento, sua pontuação será contabilizada na sua nota. Além disso, não será possível retornar para o modo de investigação. Confirma a alteração para o modo de avaliação?");
+			feedbackScreen.openScreen();
+			//feedbackScreen.setText("Ao entrar no modo de avaliação e a partir do próximo lançamento, sua pontuação será contabilizada na sua nota. Além disso, não será possível retornar para o modo de investigação. Confirma a alteração para o modo de avaliação?");
 			setChildIndex(feedbackScreen, numChildren - 1);
 		}
 		
@@ -253,27 +254,27 @@
 		
 		private function showEstatisticas(e:MouseEvent):void 
 		{
-			var textoEstatisticas:String = "";
-			
-			textoEstatisticas += "Número de lançamentos: " + String(scoreTotal.n) + "\n";
-			textoEstatisticas += "Tentativas valendo nota: " + String(scoreValendo.n) + "\n";
-			textoEstatisticas += "Tentativas não valendo nota: " + String(scoreTotal.n - scoreValendo.n) + "\n";
-			textoEstatisticas += "Pontuação para passar: " + String(scoreMin) + "%\n";
-			textoEstatisticas += "Pontuação média total: " + String(scoreTotal.mean.toFixed(0)).replace(".", "") + "%\n";
-			textoEstatisticas += "Pontuação média valendo nota: " + String(scoreValendo.mean.toFixed(0)).replace(".", "") + "%\n";
-			textoEstatisticas += "Estado da AI: " + (valendoNota ? "Valendo nota" : "Praticando");
+			updateStatisticas();
 			
 			feedbackScreen.okCancelMode = false;
-			feedbackScreen.setText(textoEstatisticas);
+			feedbackScreen.openScreen();
 			
 			setChildIndex(feedbackScreen, numChildren - 1);
 		}
 		
 		private function updateStatisticas():void
 		{
-			if (feedbackScreen.visible) {
-				showEstatisticas(null);
-			}
+			var estatisticas:Object = new Object();
+		
+			estatisticas.nTotal = String(scoreTotal.n);
+			estatisticas.nValendo = String(scoreValendo.n);
+			estatisticas.nNaoValendo = String(scoreTotal.n - scoreValendo.n);
+			estatisticas.scoreMin = String(scoreMin);
+			estatisticas.scoreTotal = String(scoreTotal.mean.toFixed(0)).replace(".", "") + "%";
+			estatisticas.scoreValendo = String(scoreValendo.mean.toFixed(0)).replace(".", "") + "%";
+			estatisticas.valendo = valendoNota;
+			
+			feedbackScreen.updateStatics(estatisticas);
 		}
 		
 		private function eagleTimeOn(e:MouseEvent):void 
