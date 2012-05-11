@@ -258,6 +258,7 @@
 				soundControl.gotoAndStop("ON");
 				muteOff();
 			}
+			saveStatus();
 		}
 		
 		private function muteOn():void
