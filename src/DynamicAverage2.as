@@ -25,6 +25,12 @@ package {
 			numbers = nInicial;
 		}
 		
+		public function setParams(mean:Number, numbers:int):void
+		{
+			this.theMean = mean;
+			this.numbers = numbers;
+		}
+		
 		/**
 		 * Acrescenta um valor à média
 		 * @param	item

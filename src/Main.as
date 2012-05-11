@@ -2,17 +2,22 @@
 {
 	import BaseAssets.BaseMain;
 	import cepa.utils.Cronometer;
+	import com.adobe.serialization.json.JSON;
 	import fl.transitions.easing.None;
 	import fl.transitions.Tween;
 	import flash.display.MovieClip;
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.events.TimerEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.media.Sound;
 	import flash.media.SoundChannel;
 	import flash.media.SoundTransform;
+	import flash.utils.Timer;
+	import pipwerks.SCORM;
 	/**
 	 * ...
 	 * @author Alexandre
@@ -44,7 +49,7 @@
 		private var timeToTarget:Number;
 		private var pontuacao:Number;
 		
-		private var score:DynamicAverage2;
+		private var scoreTotal:DynamicAverage2;
 		private var scoreValendo:DynamicAverage2;
 		private var bombaExplodiu:Boolean;
 		private var tempoTween:Number;
@@ -80,7 +85,13 @@
 			initVariables();
 			addListeners();
 			
-			iniciaTutorial();
+			if (ExternalInterface.available) {
+				initLMSConnection();
+				recoverStatus();
+				if (!completed) iniciaTutorial();
+			}else{
+				iniciaTutorial();
+			}
 		}
 		
 		private function initVariables():void
@@ -130,7 +141,7 @@
 			
 			tempoTween = Math.sqrt(2 * Number(altura.text.replace(" m", "").replace(",", ".")) / 9.8);
 			
-			score = new DynamicAverage2();
+			scoreTotal = new DynamicAverage2();
 			//mediaPontos.text = "Média: 0%";
 			
 			scoreValendo = new DynamicAverage2();
@@ -243,11 +254,11 @@
 		{
 			var textoEstatisticas:String = "";
 			
-			textoEstatisticas += "Número de lançamentos: " + String(score.n) + "\n";
+			textoEstatisticas += "Número de lançamentos: " + String(scoreTotal.n) + "\n";
 			textoEstatisticas += "Tentativas valendo nota: " + String(scoreValendo.n) + "\n";
-			textoEstatisticas += "Tentativas não valendo nota: " + String(score.n - scoreValendo.n) + "\n";
+			textoEstatisticas += "Tentativas não valendo nota: " + String(scoreTotal.n - scoreValendo.n) + "\n";
 			textoEstatisticas += "Pontuação para passar: " + String(scoreMin) + "%\n";
-			textoEstatisticas += "Pontuação média total: " + String(score.mean.toFixed(0)).replace(".", "") + "%\n";
+			textoEstatisticas += "Pontuação média total: " + String(scoreTotal.mean.toFixed(0)).replace(".", "") + "%\n";
 			textoEstatisticas += "Pontuação média valendo nota: " + String(scoreValendo.mean.toFixed(0)).replace(".", "") + "%\n";
 			textoEstatisticas += "Estado da AI: " + (valendoNota ? "Valendo nota" : "Praticando");
 			
@@ -404,17 +415,49 @@
 			if (pontuacaoAux > 100) pontuacaoAux = 100;
 			else if (pontuacaoAux < 0) pontuacaoAux = 0;
 			
-			score.push(pontuacaoAux);
+			scoreTotal.push(pontuacaoAux);
 			if (valendoNota) {
 				scoreValendo.push(pontuacaoAux);
 			}
 			
-			pontuacao = Math.round(score.mean);
+			pontuacao = Math.round(scoreTotal.mean);
 			
 			//mediaPontos.text = "Média: " + String(pontuacao) + "%";
+			saveStatus();
 			
 			return pontuacaoAux;
 			
+		}
+		
+		private function saveStatusForRecovery():void
+		{
+			var status:Object = new Object();
+			
+			status.mediaGeral = scoreTotal.mean;
+			status.nTotal = scoreTotal.n;
+			status.mediaValendo = scoreValendo.mean;
+			status.nValendo = scoreValendo.n;
+			status.valendo = valendoNota;
+			
+			mementoSerialized = JSON.encode(status);
+		}
+		
+		private function recoverStatus():void
+		{
+			if (mementoSerialized == null) return;
+			if (mementoSerialized == "null") return;
+			if (mementoSerialized == "") return;
+			
+			var status:Object = JSON.decode(mementoSerialized);
+			
+			scoreTotal.setParams(status.mediaGeral, status.nTotal);
+			scoreValendo.setParams(status.mediaValendo, status.nValendo);
+			
+			if (status.valendo) {
+				fazValer(null);
+			}
+			
+			updateStatisticas();
 		}
 		
 		/*
@@ -527,6 +570,155 @@
 				
 				balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
 				balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+			}
+		}
+		
+		
+		
+		/*------------------------------------------------------------------------------------------------*/
+		//SCORM:
+		
+		private const PING_INTERVAL:Number = 5 * 60 * 1000; // 5 minutos
+		private var completed:Boolean;
+		private var scorm:SCORM;
+		private var scormExercise:int;
+		private var connected:Boolean;
+		private var score:int = 0;
+		private var pingTimer:Timer;
+		private var mementoSerialized:String = "";
+		
+		/**
+		 * @private
+		 * Inicia a conexão com o LMS.
+		 */
+		private function initLMSConnection () : void
+		{
+			completed = false;
+			connected = false;
+			scorm = new SCORM();
+			
+			pingTimer = new Timer(PING_INTERVAL);
+			pingTimer.addEventListener(TimerEvent.TIMER, pingLMS);
+			
+			connected = scorm.connect();
+			
+			if (connected) {
+				
+				if (scorm.get("cmi.mode") != "normal") return;
+				
+				scorm.set("cmi.exit", "suspend");
+				// Verifica se a AI já foi concluída.
+				var status:String = scorm.get("cmi.completion_status");	
+				mementoSerialized = scorm.get("cmi.suspend_data");
+				var stringScore:String = scorm.get("cmi.score.raw");
+				
+				switch(status)
+				{
+					// Primeiro acesso à AI
+					case "not attempted":
+					case "unknown":
+					default:
+						completed = false;
+						break;
+					
+					// Continuando a AI...
+					case "incomplete":
+						completed = false;
+						break;
+					
+					// A AI já foi completada.
+					case "completed":
+						completed = true;
+						//setMessage("ATENÇÃO: esta Atividade Interativa já foi completada. Você pode refazê-la quantas vezes quiser, mas não valerá nota.");
+						break;
+				}
+				
+				//unmarshalObjects(mementoSerialized);
+				scormExercise = 1;
+				score = Number(stringScore.replace(",", "."));
+				
+				var success:Boolean = scorm.set("cmi.score.min", "0");
+				if (success) success = scorm.set("cmi.score.max", "100");
+				
+				if (success)
+				{
+					scorm.save();
+					pingTimer.start();
+				}
+				else
+				{
+					//trace("Falha ao enviar dados para o LMS.");
+					connected = false;
+				}
+			}
+			else
+			{
+				trace("Esta Atividade Interativa não está conectada a um LMS: seu aproveitamento nela NÃO será salvo.");
+				mementoSerialized = ExternalInterface.call("getLocalStorageString");
+			}
+			
+			//reset();
+		}
+		
+		/**
+		 * @private
+		 * Salva cmi.score.raw, cmi.location e cmi.completion_status no LMS
+		 */ 
+		private function commit()
+		{
+			if (connected)
+			{
+				if (scorm.get("cmi.mode") != "normal") return;
+				
+				// Salva no LMS a nota do aluno.
+				var success:Boolean = scorm.set("cmi.score.raw", score.toString());
+
+				// Notifica o LMS que esta atividade foi concluída.
+				success = scorm.set("cmi.completion_status", (completed ? "completed" : "incomplete"));
+
+				// Salva no LMS o exercício que deve ser exibido quando a AI for acessada novamente.
+				success = scorm.set("cmi.location", scormExercise.toString());
+				
+				// Salva no LMS a string que representa a situação atual da AI para ser recuperada posteriormente.
+				success = scorm.set("cmi.suspend_data", mementoSerialized.toString());
+
+				if (success)
+				{
+					scorm.save();
+				}
+				else
+				{
+					pingTimer.stop();
+					//setMessage("Falha na conexão com o LMS.");
+					connected = false;
+				}
+			}else { //LocalStorage
+				//ExternalInterface.call("save2LS", mementoSerialized);
+			}
+		}
+		
+		/**
+		 * @private
+		 * Mantém a conexão com LMS ativa, atualizando a variável cmi.session_time
+		 */
+		private function pingLMS (event:TimerEvent)
+		{
+			commit();
+		}
+		
+		private function saveStatus(e:Event = null):void
+		{
+			if (ExternalInterface.available) {
+				
+				if (connected) {
+					if (scorm.get("cmi.mode") != "normal") return;
+					
+					saveStatusForRecovery();
+					commit();
+				}else {//LocalStorage
+					saveStatusForRecovery();
+					ExternalInterface.call("save2LS", mementoSerialized);
+				}
 			}
 		}
 		
