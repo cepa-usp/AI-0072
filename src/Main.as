@@ -64,11 +64,17 @@
 		
 		private var sound:SoundChannel = new SoundChannel();
 		private var soundAviao:SoundChannel = new SoundChannel();
+		private var soundExplosao:SoundChannel = new SoundChannel();
 		private var bombaCaindo:BombaCaindo = new BombaCaindo();
 		private var explosao:Explosao = new Explosao();
 		private var aviaoVoando:AviaoVoando = new AviaoVoando();
 		
+		private var soundTransformMute:SoundTransform = new SoundTransform(0);
+		private var soundTransformNormal:SoundTransform = new SoundTransform(1);
 		private var soundTransform2:SoundTransform = new SoundTransform(0.05);
+		
+		private var currentSoundTransform:SoundTransform;
+		private var currentSoundTransform2:SoundTransform;
 		
 		public function Main() 
 		{
@@ -146,6 +152,10 @@
 			
 			scoreValendo = new DynamicAverage2();
 			
+			soundControl.gotoAndStop("ON");
+			currentSoundTransform = soundTransformNormal;
+			currentSoundTransform2 = soundTransform2;
+			
 			setChildIndex(botoes, numChildren - 1);
 			setChildIndex(bordaAtividade, numChildren - 1);
 		}
@@ -221,6 +231,7 @@
 			
 			soundAviao.stop();
 			soundAviao = aviaoVoando.play();
+			soundAviao.soundTransform = currentSoundTransform;
 			
 		}
 		
@@ -234,7 +245,37 @@
 			btEstatisticas.addEventListener(MouseEvent.CLICK, showEstatisticas);
 			btValendoNota.addEventListener(MouseEvent.CLICK, askFazValer);
 			
-			feedbackScreen.addEventListener("OK", fazValer)
+			feedbackScreen.addEventListener("OK", fazValer);
+			soundControl.addEventListener(MouseEvent.CLICK, changeSound);
+		}
+		
+		private function changeSound(e:MouseEvent):void 
+		{
+			if (soundControl.currentLabel == "ON") {
+				soundControl.gotoAndStop("OFF");
+				muteOn();
+			}else {
+				soundControl.gotoAndStop("ON");
+				muteOff();
+			}
+		}
+		
+		private function muteOn():void
+		{
+			sound.soundTransform = soundTransformMute;
+			soundAviao.soundTransform = soundTransformMute;
+			soundExplosao.soundTransform = soundTransformMute;
+			currentSoundTransform = soundTransformMute;
+			currentSoundTransform2 = soundTransformMute;
+		}
+		
+		private function muteOff():void
+		{
+			sound.soundTransform = soundTransform2;
+			soundAviao.soundTransform = soundTransformNormal;
+			soundExplosao.soundTransform = soundTransformNormal;
+			currentSoundTransform = soundTransformNormal;
+			currentSoundTransform2 = soundTransform2;
 		}
 		
 		private function askFazValer(e:MouseEvent):void 
@@ -301,21 +342,13 @@
 				bombaLancada = true;
 				
 				sound = bombaCaindo.play();
-				sound.soundTransform = soundTransform2;
+				sound.soundTransform = currentSoundTransform2;
 				//stage.addEventListener(Event.ENTER_FRAME, soundSeek);
 				
 				//tweenBomba = new Tween(bomba, "rotation", None.easeNone, -90, 0, tempoTween, true);
 				
 				launchButton.alpha = 0.5;
 				launchButton.mouseEnabled = false;
-			}
-		}
-		
-		private function soundSeek(e:Event):void 
-		{
-			if (sound.position >= 5000) {
-				sound.stop();
-				sound = Sound(bombaCaindo).play(4900);
 			}
 		}
 		
@@ -390,8 +423,8 @@
 					
 					//sound.stop();
 					sound.stop();
-					//stage.removeEventListener(Event.ENTER_FRAME, soundSeek);
-					explosao.play();
+					soundExplosao = explosao.play();
+					soundExplosao.soundTransform = currentSoundTransform;
 					
 					//bomba.play();
 					bomba.rotation = 0;
@@ -449,6 +482,7 @@
 			status.mediaValendo = scoreValendo.mean;
 			status.nValendo = scoreValendo.n;
 			status.valendo = valendoNota;
+			status.sound = soundControl.currentLabel;
 			
 			mementoSerialized = JSON.encode(status);
 		}
@@ -466,6 +500,13 @@
 			
 			if (status.valendo) {
 				fazValer(null);
+			}
+			
+			soundControl.gotoAndStop(status.sound);
+			if (status.sound == "ON") {
+				muteOff();
+			}else {
+				muteOn();
 			}
 			
 			updateStatisticas();
