@@ -458,16 +458,13 @@
 					if (!completed) {
 						if (scoreValendo.mean >= scoreMin) {
 							completed = true;
-							score = scoreValendo.mean;
-							saveStatus();
 						}
 					}
+					score = scoreValendo.mean;
 				}
 			}
 			
 			pontuacao = Math.round(scoreTotal.mean);
-			
-			//mediaPontos.text = "Média: " + String(pontuacao) + "%";
 			saveStatus();
 			
 			return pontuacaoAux;
