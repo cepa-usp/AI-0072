@@ -243,7 +243,7 @@
 			launchButton.addEventListener(MouseEvent.MOUSE_OVER, eagleTimeOn);
 			launchButton.addEventListener(MouseEvent.MOUSE_OUT, eagleTimeOff);
 			
-			btEstatisticas.addEventListener(MouseEvent.CLICK, showEstatisticas);
+			botoes.btEstatisticas.addEventListener(MouseEvent.CLICK, showEstatisticas);
 			btValendoNota.addEventListener(MouseEvent.CLICK, askFazValer);
 			
 			feedbackScreen.addEventListener("OK", fazValer);
@@ -313,8 +313,8 @@
 			estatisticas.nValendo = String(scoreValendo.n);
 			estatisticas.nNaoValendo = String(scoreTotal.n - scoreValendo.n);
 			estatisticas.scoreMin = String(scoreMin);
-			estatisticas.scoreTotal = String(scoreTotal.mean.toFixed(0)).replace(".", "") + "%";
-			estatisticas.scoreValendo = String(scoreValendo.mean.toFixed(0)).replace(".", "") + "%";
+			estatisticas.scoreTotal = String(scoreTotal.mean.toFixed(0)).replace(".", "");
+			estatisticas.scoreValendo = String(scoreValendo.mean.toFixed(0)).replace(".", "");
 			estatisticas.valendo = valendoNota;
 			
 			feedbackScreen.updateStatics(estatisticas);
