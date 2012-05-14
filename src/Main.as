@@ -102,6 +102,10 @@
 		
 		private function initVariables():void
 		{
+			bomba = new Bomba();
+			bomba.x = -50;
+			addChild(bomba);
+			
 			aviao = new Aviao();
 			addChild(aviao);
 			soundAviao = aviaoVoando.play();
@@ -123,9 +127,6 @@
 			timeElasped = 0;
 			tBombaElasped = 0;
 			
-			bomba = new Bomba();
-			bomba.x = -50;
-			addChild(bomba);
 			tBomba = new Cronometer();
 			
 			bombaLancada = false;
@@ -333,6 +334,8 @@
 		{
 			if (!bombaLancada && Number(ETO.text.replace(",",".").replace("s","")) > 0 && !bombaExplodiu)
 			{
+				aviao.abertura.play();
+				
 				bombaR0 = pixel2meter(new Point(aviao.x, aviao.y));
 				bombaV0 = aviaoV0;
 				bomba.rotation = -90;
@@ -596,7 +599,7 @@
 								[CaixaTexto.LEFT, CaixaTexto.CENTER],
 								[CaixaTexto.RIGHT, CaixaTexto.FIRST],
 								["", ""],
-								[CaixaTexto.BOTTON, CaixaTexto.FIRST]];
+								[CaixaTexto.BOTTON, CaixaTexto.CENTER]];
 			}
 			balao.removeEventListener(Event.CLOSE, closeBalao);
 			
