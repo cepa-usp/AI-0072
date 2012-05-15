@@ -248,6 +248,20 @@
 			
 			feedbackScreen.addEventListener("OK", fazValer);
 			soundControl.addEventListener(MouseEvent.CLICK, changeSound);
+			soundControl.buttonMode = true;
+			soundControl.mouseChildren = false;
+			soundControl.addEventListener(MouseEvent.MOUSE_OVER, overBtn);
+			soundControl.addEventListener(MouseEvent.MOUSE_OUT, outBtn);
+		}
+		
+		private function overBtn(e:MouseEvent):void
+		{
+			e.target.scaleX = e.target.scaleY = 1.2;
+		}
+		
+		private function outBtn(e:MouseEvent):void
+		{
+			e.target.scaleX = e.target.scaleY = 1;
 		}
 		
 		private function changeSound(e:MouseEvent):void 
