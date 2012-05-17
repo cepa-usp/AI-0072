@@ -180,6 +180,7 @@
 				
 				indETO.visible = true;
 				ETO.visible = true;
+				targetLine.visible = true;
 				
 				var hAviao:Number = pixel2meter(new Point(posInicialAviao.x, posInicialAviao.y)).y;
 				//altura.text = hAviao.toFixed(1).replace(".",",") + " m";
@@ -228,6 +229,7 @@
 				timeElasped = 0;
 				indETO.visible = true;
 				ETO.visible = true;
+				targetLine.visible = true;
 			}
 			
 			soundAviao.stop();
@@ -409,6 +411,7 @@
 				if (ETO.visible) {
 					indETO.visible = false;
 					ETO.visible = false;
+					targetLine.visible = false;
 				}
 			}
 			else ETO.text = tempoETO.toFixed(1).replace(".",",") + " s";

@@ -6,6 +6,7 @@ package BaseAssets
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.filters.ColorMatrixFilter;
 	import flash.filters.DropShadowFilter;
 	import flash.geom.Rectangle;
 	/**
@@ -23,6 +24,16 @@ package BaseAssets
 		
 		public var botoes:Botoes;
 		public var bordaAtividade:Borda;
+		
+		/*
+		 * Filtro de conversão para tons de cinza.
+		 */
+		public const GRAYSCALE_FILTER:ColorMatrixFilter = new ColorMatrixFilter([
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.2225, 0.7169, 0.0606, 0, 0,
+			0.0000, 0.0000, 0.0000, 1, 0
+		]);
 		
 		public function BaseMain() 
 		{
@@ -77,6 +88,7 @@ package BaseAssets
 			//botoes.resetButton.addEventListener(MouseEvent.CLICK, reset);
 			botoes.resetButton.alpha = 0.5;
 			botoes.resetButton.mouseEnabled = false;
+			botoes.resetButton.filters = [GRAYSCALE_FILTER];
 			
 			createToolTips();
 		}
@@ -90,11 +102,13 @@ package BaseAssets
 			var instTT:ToolTip = new ToolTip(botoes.orientacoesBtn, "Orientações", 12, 0.8, 100, 0.6, 0.1);
 			var resetTT:ToolTip = new ToolTip(botoes.resetButton, "Reiniciar", 12, 0.8, 100, 0.6, 0.1);
 			var infoTT:ToolTip = new ToolTip(botoes.creditos, "Créditos", 12, 0.8, 100, 0.6, 0.1);
+			var desTT:ToolTip = new ToolTip(botoes.btEstatisticas, "Desempenho", 12, 0.8, 100, 0.6, 0.1);
 			
 			addChild(intTT);
 			addChild(instTT);
 			addChild(resetTT);
 			addChild(infoTT);
+			addChild(desTT);
 			
 		}
 		
