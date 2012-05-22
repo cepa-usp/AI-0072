@@ -157,6 +157,7 @@
 			currentSoundTransform = soundTransformNormal;
 			currentSoundTransform2 = soundTransform2;
 			
+			setChildIndex(fundoMute, numChildren - 1);
 			setChildIndex(soundControl, numChildren - 1);
 			setChildIndex(botoes, numChildren - 1);
 			setChildIndex(bordaAtividade, numChildren - 1);
