@@ -70,8 +70,14 @@ package BaseAssets
 				estatisticas.scoreTotal.text = stats.scoreTotal;
 				estatisticas.scoreValendo.text = stats.scoreValendo;
 				
-				if (stats.valendo) estatisticas.valendoMC.gotoAndStop("VALENDO");
-				else estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+				if (stats.valendo) {
+					estatisticas.valendoMC.gotoAndStop("VALENDO");
+					estatisticas.valendoText.visible = false;
+				}
+				else {
+					estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+					estatisticas.valendoText.visible = true;
+				}
 			}
 		}
 		
@@ -101,8 +107,14 @@ package BaseAssets
 				estatisticas.scoreTotal.text = stats.scoreTotal;
 				estatisticas.scoreValendo.text = stats.scoreValendo;
 				
-				if (stats.valendo) estatisticas.valendoMC.gotoAndStop("VALENDO");
-				else estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+				if (stats.valendo) {
+					estatisticas.valendoMC.gotoAndStop("VALENDO");
+					estatisticas.valendoText.visible = false;
+				}
+				else {
+					estatisticas.valendoMC.gotoAndStop("NAO_VALENDO");
+					estatisticas.valendoText.visible = true;
+				}
 				
 				closeButton.x = 195;
 				cancelButton.visible = false;

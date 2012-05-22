@@ -308,7 +308,10 @@
 		private function fazValer(e:Event):void 
 		{
 			valendoNota = true;
-			btValendoNota.visible = false;
+			//btValendoNota.visible = false;
+			btValendoNota.filters = [GRAYSCALE_FILTER];
+			btValendoNota.alpha = 0.5;
+			btValendoNota.mouseEnabled = false;
 			saveStatus();
 		}
 		
