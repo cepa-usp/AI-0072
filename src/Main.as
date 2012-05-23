@@ -109,6 +109,7 @@
 			aviao = new Aviao();
 			addChild(aviao);
 			soundAviao = aviaoVoando.play();
+			soundAviao.addEventListener(Event.SOUND_COMPLETE, repeatPlaneSound);
 			
 			//aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , Math.random() * 270 + 300);
 			aviaoR0 = new Point(pixel2meter(new Point(0 - 55, 0)).x , pixel2meter(new Point(0, Math.random() * 265 + 35)).y);
@@ -161,6 +162,15 @@
 			setChildIndex(soundControl, numChildren - 1);
 			setChildIndex(botoes, numChildren - 1);
 			setChildIndex(bordaAtividade, numChildren - 1);
+		}
+		
+		private function repeatPlaneSound(e:Event):void 
+		{
+			soundAviao.removeEventListener(Event.SOUND_COMPLETE, repeatPlaneSound);
+			if(e == null) soundAviao.stop();
+			soundAviao = aviaoVoando.play();
+			soundAviao.soundTransform = currentSoundTransform;
+			soundAviao.addEventListener(Event.SOUND_COMPLETE, repeatPlaneSound);
 		}
 		
 		private function changePlaneParameters():void
@@ -234,9 +244,7 @@
 				targetLine.visible = true;
 			}
 			
-			soundAviao.stop();
-			soundAviao = aviaoVoando.play();
-			soundAviao.soundTransform = currentSoundTransform;
+			repeatPlaneSound(null);
 			
 		}
 		
