@@ -3,6 +3,7 @@
 	import BaseAssets.BaseMain;
 	import cepa.utils.Cronometer;
 	import com.adobe.serialization.json.JSON;
+	import com.eclecticdesignstudio.motion.Actuate;
 	import fl.transitions.easing.None;
 	import fl.transitions.Tween;
 	import flash.display.MovieClip;
@@ -466,6 +467,7 @@
 					bomba.pontuacao.text = String(Math.round(pontos)) + "%";
 					
 					updateStatisticas();
+					tremeTela();
 				}
 				else
 				{
@@ -474,6 +476,27 @@
 					//bomba.rotation = getBombRotation(tBomba.read() / 1000);
 					bomba.rotation = getBombRotation(tBombaElasped);
 				}
+			}
+		}
+		
+		private var posFundo:Point = new Point(350, 250);
+		private var nMoves:int;
+		private var totalTimeMove:Number = 4;
+		private var maxMoves:int = 30;
+		private var deltaMove:Number = 5;
+		private function tremeTela():void 
+		{
+			nMoves = 0;
+			Actuate.tween(fundo, totalTimeMove/maxMoves, { x:fundo.x + Math.random() * deltaMove * (Math.random() > 0.5 ? 1 : -1), y:fundo.y + Math.random() * deltaMove * (Math.random() > 0.5 ? 1 : -1) } ).onComplete(tremeMais);
+		}
+		
+		private function tremeMais():void 
+		{
+			nMoves++;
+			if (nMoves == maxMoves - 1) {
+				Actuate.tween(fundo, 0.4, { x:posFundo.x, y:posFundo.y } );
+			}else {
+				Actuate.tween(fundo, 1/maxMoves, { x:fundo.x + Math.random() * deltaMove * (Math.random() > 0.5 ? 1 : -1), y:fundo.y + Math.random() * deltaMove * (Math.random() > 0.5 ? 1 : -1) } ).onComplete(tremeMais);
 			}
 		}
 		
